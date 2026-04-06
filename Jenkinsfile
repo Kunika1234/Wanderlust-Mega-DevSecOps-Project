@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         SONAR_HOME = tool "Sonar"
-        DOCKER_CREDENTIALS = 'dockerhub'
     }
 
     parameters {
@@ -60,10 +59,10 @@ pipeline {
             steps {
                 script {
                     dir('backend') {
-                        sh "docker build -t madhupdevops/wanderlust-backend-beta:${params.BACKEND_DOCKER_TAG} ."
+                        sh "docker build -t $USER/wanderlust-backend-beta:${params.BACKEND_DOCKER_TAG} ."
                     }
                     dir('frontend') {
-                        sh "docker build -t madhupdevops/wanderlust-frontend-beta:${params.FRONTEND_DOCKER_TAG} ."
+                        sh "docker build -t $USER/wanderlust-frontend-beta:${params.FRONTEND_DOCKER_TAG} ."
                     }
                 }
             }
@@ -72,8 +71,8 @@ pipeline {
         stage('Trivy Image Scan') {
             steps {
                 sh """
-                trivy image madhupdevops/wanderlust-backend-beta:${params.BACKEND_DOCKER_TAG} || true
-                trivy image madhupdevops/wanderlust-frontend-beta:${params.FRONTEND_DOCKER_TAG} || true
+                trivy image $USER/wanderlust-backend-beta:${params.BACKEND_DOCKER_TAG} || true
+                trivy image $USER/wanderlust-frontend-beta:${params.FRONTEND_DOCKER_TAG} || true
                 """
             }
         }
@@ -81,16 +80,17 @@ pipeline {
         stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: "${DOCKER_CREDENTIALS}",
+                    credentialsId: 'dockerhub',
                     usernameVariable: 'USER',
                     passwordVariable: 'PASS'
                 )]) {
 
-                    sh """
+                    sh '''
                     echo $PASS | docker login -u $USER --password-stdin
-                    docker push madhupdevops/wanderlust-backend-beta:${params.BACKEND_DOCKER_TAG}
-                    docker push madhupdevops/wanderlust-frontend-beta:${params.FRONTEND_DOCKER_TAG}
-                    """
+
+                    docker push $USER/wanderlust-backend-beta:${BACKEND_DOCKER_TAG}
+                    docker push $USER/wanderlust-frontend-beta:${FRONTEND_DOCKER_TAG}
+                    '''
                 }
             }
         }
