@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: <YOUR_DOCKER_USERNAME>/wanderlust-backend-beta:latest
+        image: Kunika1234/wanderlust-backend-beta:latest
         ports:
         - containerPort: 5000
         env:
