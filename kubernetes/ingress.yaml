@@ -2,7 +2,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: wanderlust-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: nginx
   rules:
   - http:
       paths:
@@ -10,6 +13,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: frontend-service   # ⚠️ IMPORTANT
+            name: frontend-service
             port:
-              number: 80             # ⚠️ IMPORTANT
+              number: 80
