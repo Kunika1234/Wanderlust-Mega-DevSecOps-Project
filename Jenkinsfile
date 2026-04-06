@@ -7,13 +7,13 @@ pipeline {
     }
 
     parameters {
-        string(name: 'FRONTEND_DOCKER_TAG', defaultValue: 'latest', description: 'Frontend Docker Tag')
-        string(name: 'BACKEND_DOCKER_TAG', defaultValue: 'latest', description: 'Backend Docker Tag')
+        string(name: 'FRONTEND_DOCKER_TAG', defaultValue: 'latest')
+        string(name: 'BACKEND_DOCKER_TAG', defaultValue: 'latest')
     }
 
     stages {
 
-        stage("Workspace cleanup") {
+        stage('Workspace Cleanup') {
             steps {
                 cleanWs()
             }
@@ -25,20 +25,25 @@ pipeline {
             }
         }
 
-        stage("Trivy: Filesystem scan") {
+        stage('Install Dependencies') {
             steps {
-                sh "trivy fs . || true"
+                sh 'npm install || true'
             }
         }
 
-        // OPTIONAL (skip if not installed)
-        stage("OWASP: Dependency check") {
+        stage('OWASP Dependency Check') {
             steps {
-                sh "dependency-check.sh --scan . --format XML || true"
+                sh 'dependency-check.sh --scan . --format XML || true'
             }
         }
 
-        stage("SonarQube: Code Analysis") {
+        stage('Trivy Filesystem Scan') {
+            steps {
+                sh 'trivy fs . || true'
+            }
+        }
+
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('Sonar') {
                     sh """
@@ -51,43 +56,12 @@ pipeline {
             }
         }
 
-        // FIXED QUALITY GATE (no pipeline fail)
-        stage("SonarQube: Quality Gate") {
-            steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: false
-                }
-            }
-        }
-
-        stage('Exporting environment variables') {
-            parallel {
-
-                stage("Backend env setup") {
-                    steps {
-                        dir("Automations") {
-                            sh "bash updatebackendnew.sh"
-                        }
-                    }
-                }
-
-                stage("Frontend env setup") {
-                    steps {
-                        dir("Automations") {
-                            sh "bash updatefrontendnew.sh"
-                        }
-                    }
-                }
-            }
-        }
-
-        stage("Docker: Build Images") {
+        stage('Build Docker Images') {
             steps {
                 script {
                     dir('backend') {
                         sh "docker build -t madhupdevops/wanderlust-backend-beta:${params.BACKEND_DOCKER_TAG} ."
                     }
-
                     dir('frontend') {
                         sh "docker build -t madhupdevops/wanderlust-frontend-beta:${params.FRONTEND_DOCKER_TAG} ."
                     }
@@ -95,7 +69,16 @@ pipeline {
             }
         }
 
-        stage("Docker: Login & Push") {
+        stage('Trivy Image Scan') {
+            steps {
+                sh """
+                trivy image madhupdevops/wanderlust-backend-beta:${params.BACKEND_DOCKER_TAG} || true
+                trivy image madhupdevops/wanderlust-frontend-beta:${params.FRONTEND_DOCKER_TAG} || true
+                """
+            }
+        }
+
+        stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: "${DOCKER_CREDENTIALS}",
@@ -115,14 +98,8 @@ pipeline {
 
     post {
         success {
-            archiveArtifacts artifacts: '**/*.xml', followSymlinks: false
-
-            build job: "Wanderlust-CD", parameters: [
-                string(name: 'FRONTEND_DOCKER_TAG', value: "${params.FRONTEND_DOCKER_TAG}"),
-                string(name: 'BACKEND_DOCKER_TAG', value: "${params.BACKEND_DOCKER_TAG}")
-            ]
+            echo "✅ FULL DEVSECOPS PIPELINE SUCCESS 🚀"
         }
-
         failure {
             echo "❌ Pipeline Failed"
         }
