@@ -10,6 +10,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: frontend-service
+            name: frontend-service   # ⚠️ IMPORTANT
             port:
-              number: 80
+              number: 80             # ⚠️ IMPORTANT
