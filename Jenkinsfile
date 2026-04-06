@@ -20,25 +20,35 @@ pipeline {
 
         stage('Git: Code Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/DevMadhup/Wanderlust-Mega-Project.git'
+                git branch: 'main',
+                    url: 'https://github.com/Kunika1234/Wanderlust-Mega-DevSecOps-Project.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install || true'
+                sh '''
+                echo "Installing dependencies..."
+                npm install || true
+                '''
             }
         }
 
         stage('OWASP Dependency Check') {
             steps {
-                sh 'dependency-check.sh --scan . --format XML || true'
+                sh '''
+                echo "Running OWASP scan..."
+                dependency-check.sh --scan . --format XML || true
+                '''
             }
         }
 
         stage('Trivy Filesystem Scan') {
             steps {
-                sh 'trivy fs . || true'
+                sh '''
+                echo "Running Trivy FS scan..."
+                trivy fs . || true
+                '''
             }
         }
 
@@ -57,12 +67,24 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                script {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
+
                     dir('backend') {
-                        sh "docker build -t $USER/wanderlust-backend-beta:${params.BACKEND_DOCKER_TAG} ."
+                        sh '''
+                        echo "Building backend image..."
+                        docker build -t $USER/wanderlust-backend-beta:${BACKEND_DOCKER_TAG} .
+                        '''
                     }
+
                     dir('frontend') {
-                        sh "docker build -t $USER/wanderlust-frontend-beta:${params.FRONTEND_DOCKER_TAG} ."
+                        sh '''
+                        echo "Building frontend image..."
+                        docker build -t $USER/wanderlust-frontend-beta:${FRONTEND_DOCKER_TAG} .
+                        '''
                     }
                 }
             }
@@ -70,10 +92,20 @@ pipeline {
 
         stage('Trivy Image Scan') {
             steps {
-                sh """
-                trivy image $USER/wanderlust-backend-beta:${params.BACKEND_DOCKER_TAG} || true
-                trivy image $USER/wanderlust-frontend-beta:${params.FRONTEND_DOCKER_TAG} || true
-                """
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
+
+                    sh '''
+                    echo "Scanning backend image..."
+                    trivy image $USER/wanderlust-backend-beta:${BACKEND_DOCKER_TAG} || true
+
+                    echo "Scanning frontend image..."
+                    trivy image $USER/wanderlust-frontend-beta:${FRONTEND_DOCKER_TAG} || true
+                    '''
+                }
             }
         }
 
@@ -86,9 +118,13 @@ pipeline {
                 )]) {
 
                     sh '''
+                    echo "Logging into DockerHub..."
                     echo $PASS | docker login -u $USER --password-stdin
 
+                    echo "Pushing backend image..."
                     docker push $USER/wanderlust-backend-beta:${BACKEND_DOCKER_TAG}
+
+                    echo "Pushing frontend image..."
                     docker push $USER/wanderlust-frontend-beta:${FRONTEND_DOCKER_TAG}
                     '''
                 }
@@ -98,10 +134,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ FULL DEVSECOPS PIPELINE SUCCESS 🚀"
+            echo "✅ FULL DEVSECOPS PIPELINE SUCCESS 🚀🔥"
         }
         failure {
-            echo "❌ Pipeline Failed"
+            echo "❌ PIPELINE FAILED"
         }
     }
 }
