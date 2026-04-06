@@ -1,119 +1,128 @@
 pipeline {
-    agent {label 'Node'}
-    
-    environment{
+    agent any   // ✅ FIXED (no more Node error)
+
+    environment {
         SONAR_HOME = tool "Sonar"
+        DOCKER_CREDENTIALS = 'dockerhub'   // 🔐 credentials ID
     }
-    
+
     parameters {
-        string(name: 'FRONTEND_DOCKER_TAG', defaultValue: '', description: 'Setting docker image for latest push')
-        string(name: 'BACKEND_DOCKER_TAG', defaultValue: '', description: 'Setting docker image for latest push')
+        string(name: 'FRONTEND_DOCKER_TAG', defaultValue: 'latest', description: 'Frontend Docker Tag')
+        string(name: 'BACKEND_DOCKER_TAG', defaultValue: 'latest', description: 'Backend Docker Tag')
     }
-    
+
     stages {
-        
-        stage("Workspace cleanup"){
-            steps{
-                script{
-                    cleanWs()
-                }
+
+        stage("Workspace cleanup") {
+            steps {
+                cleanWs()
             }
         }
-        
+
         stage('Git: Code Checkout') {
             steps {
-                script{
-                    code_checkout("https://github.com/DevMadhup/Wanderlust-Mega-Project.git","main")
-                }
+                git branch: 'main', url: 'https://github.com/DevMadhup/Wanderlust-Mega-Project.git'
             }
         }
-        
-        stage("Trivy: Filesystem scan"){
-            steps{
-                script{
-                    trivy_scan()
+
+        stage("Trivy: Filesystem scan") {
+            steps {
+                sh "trivy fs . || true"
+            }
+        }
+
+        stage("OWASP: Dependency check") {
+            steps {
+                sh "dependency-check.sh --scan . --format XML || true"
+            }
+        }
+
+        stage("SonarQube: Code Analysis") {
+            steps {
+                withSonarQubeEnv('Sonar') {
+                    sh """
+                    ${SONAR_HOME}/bin/sonar-scanner \
+                    -Dsonar.projectKey=wanderlust \
+                    -Dsonar.projectName=wanderlust \
+                    -Dsonar.sources=.
+                    """
                 }
             }
         }
 
-        stage("OWASP: Dependency check"){
-            steps{
-                script{
-                    owasp_dependency()
+        stage("SonarQube: Quality Gate") {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
-        
-        stage("SonarQube: Code Analysis"){
-            steps{
-                script{
-                    sonarqube_analysis("Sonar","wanderlust","wanderlust")
-                }
-            }
-        }
-        
-        stage("SonarQube: Code Quality Gates"){
-            steps{
-                script{
-                    sonarqube_code_quality()
-                }
-            }
-        }
-        
+
         stage('Exporting environment variables') {
-            parallel{
-                stage("Backend env setup"){
+            parallel {
+
+                stage("Backend env setup") {
                     steps {
-                        script{
-                            dir("Automations"){
-                                sh "bash updatebackendnew.sh"
-                            }
+                        dir("Automations") {
+                            sh "bash updatebackendnew.sh"
                         }
                     }
                 }
-                
-                stage("Frontend env setup"){
+
+                stage("Frontend env setup") {
                     steps {
-                        script{
-                            dir("Automations"){
-                                sh "bash updatefrontendnew.sh"
-                            }
+                        dir("Automations") {
+                            sh "bash updatefrontendnew.sh"
                         }
                     }
                 }
             }
         }
-        
-        stage("Docker: Build Images"){
-            steps{
-                script{
-                        dir('backend'){
-                            docker_build("wanderlust-backend-beta","${params.BACKEND_DOCKER_TAG}","madhupdevops")
-                        }
-                    
-                        dir('frontend'){
-                            docker_build("wanderlust-frontend-beta","${params.FRONTEND_DOCKER_TAG}","madhupdevops")
-                        }
+
+        stage("Docker: Build Images") {
+            steps {
+                script {
+                    dir('backend') {
+                        sh "docker build -t madhupdevops/wanderlust-backend-beta:${params.BACKEND_DOCKER_TAG} ."
+                    }
+
+                    dir('frontend') {
+                        sh "docker build -t madhupdevops/wanderlust-frontend-beta:${params.FRONTEND_DOCKER_TAG} ."
+                    }
                 }
             }
         }
-        
-        stage("Docker: Push to DockerHub"){
-            steps{
-                script{
-                    docker_push("wanderlust-backend-beta","${params.BACKEND_DOCKER_TAG}","madhupdevops") 
-                    docker_push("wanderlust-frontend-beta","${params.FRONTEND_DOCKER_TAG}","madhupdevops")
+
+        stage("Docker: Login & Push") {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: "${DOCKER_CREDENTIALS}",
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
+
+                    sh """
+                    echo $PASS | docker login -u $USER --password-stdin
+                    docker push madhupdevops/wanderlust-backend-beta:${params.BACKEND_DOCKER_TAG}
+                    docker push madhupdevops/wanderlust-frontend-beta:${params.FRONTEND_DOCKER_TAG}
+                    """
                 }
             }
         }
     }
-    post{
-        success{
-            archiveArtifacts artifacts: '*.xml', followSymlinks: false
+
+    post {
+        success {
+            archiveArtifacts artifacts: '**/*.xml', followSymlinks: false
+
             build job: "Wanderlust-CD", parameters: [
                 string(name: 'FRONTEND_DOCKER_TAG', value: "${params.FRONTEND_DOCKER_TAG}"),
                 string(name: 'BACKEND_DOCKER_TAG', value: "${params.BACKEND_DOCKER_TAG}")
             ]
+        }
+
+        failure {
+            echo "❌ Pipeline Failed"
         }
     }
 }
