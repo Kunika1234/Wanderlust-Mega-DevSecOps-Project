@@ -1,5 +1,13 @@
 # Wanderlust — Mega DevSecOps Project
-`CI/CD` `GitOps` `Kubernetes` `Docker` `SonarQube` `OWASP` `Trivy` `Prometheus` `Grafana`
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-Jenkins-D24939?style=flat-square&logo=jenkins&logoColor=white)](https://www.jenkins.io/)
+[![GitOps](https://img.shields.io/badge/GitOps-ArgoCD-EF7B4D?style=flat-square&logo=argo&logoColor=white)](https://argoproj.github.io/cd/)
+[![Kubernetes](https://img.shields.io/badge/Orchestration-Kubernetes-326CE5?style=flat-square&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+[![Docker](https://img.shields.io/badge/Containerization-Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+[![SonarQube](https://img.shields.io/badge/Code%20Quality-SonarQube-4E9BCD?style=flat-square&logo=sonarqube&logoColor=white)](https://www.sonarsource.com/products/sonarqube/)
+[![OWASP](https://img.shields.io/badge/Security-OWASP%20Dependency%20Check-000000?style=flat-square&logo=owasp&logoColor=white)](https://owasp.org/www-project-dependency-check/)
+[![Trivy](https://img.shields.io/badge/Scanner-Trivy-1904DA?style=flat-square&logo=aquasecurity&logoColor=white)](https://trivy.dev/)
+[![Prometheus](https://img.shields.io/badge/Monitoring-Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white)](https://prometheus.io/)
+[![Grafana](https://img.shields.io/badge/Observability-Grafana-F46800?style=flat-square&logo=grafana&logoColor=white)](https://grafana.com/)
 
 A production-grade DevSecOps implementation for WanderLust, a MERN-stack travel blog application. This project wraps a fully automated CI/CD pipeline around the application, enforcing security at every stage — from code commit to live Kubernetes deployment — with GitOps-driven delivery and real-time observability.
 
