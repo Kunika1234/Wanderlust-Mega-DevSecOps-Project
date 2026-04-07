@@ -12,6 +12,7 @@
 A production-grade DevSecOps implementation for WanderLust, a MERN-stack travel blog application. This project wraps a fully automated CI/CD pipeline around the application, enforcing security at every stage — from code commit to live Kubernetes deployment — with GitOps-driven delivery and real-time observability.
 
 > **Application credit:** The WanderLust MERN application was originally developed by [krishnaacharyaa](https://github.com/krishnaacharyaa). This repository is focused entirely on the DevSecOps engineering layer built on top of it.
+<img width="2010" height="1401" alt="image" src="https://github.com/user-attachments/assets/3f3a8b84-12b4-4c56-ab02-b754dd883062" />
 
 ---
 
@@ -68,6 +69,7 @@ Built on a Jenkins master-worker node architecture. Every commit triggers a run 
 | Trivy Image Scan | Scans built container images before any push |
 | Docker Push | Pushes verified images to DockerHub |
 | Post Actions | Archives build artifacts and sends email notification |
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/74e5026e-934b-4d46-8b62-c3529d72e266" />
 
 ---
 
@@ -96,6 +98,7 @@ SonarQube runs against the full codebase on every pipeline execution. The qualit
 | New Security Hotspots | 0 |
 | New Code Smells | 0 |
 | Reliability / Security / Maintainability | A / A / A |
+<img width="1852" height="930" alt="image" src="https://github.com/user-attachments/assets/5bca6be0-ac7a-46f7-82f0-212b02abebd7" />
 
 ---
 
@@ -112,6 +115,9 @@ ArgoCD watches the Kubernetes manifests repository and reconciles the live clust
 | Auto Sync | Enabled |
 | Synced Resources | 10 |
 | Healthy Resources | 17 |
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/1dbb5049-bfd0-4c19-82d2-038c43ca216f" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/9cfb84e9-ed85-4a9d-b79d-82cbd74d6236" />
+
 
 **Deployed resources:**
 - `mongo-pv` / `mongo-pvc` — Persistent volume and claim for MongoDB
@@ -134,6 +140,8 @@ Prometheus scrapes pod-level metrics from the cluster. Grafana surfaces them on 
 | frontend-deployment | 0 B/s | 0 B/s | 0 p/s |
 
 CPU usage is tracked per pod over a rolling 1-hour window with quota, request, and limit overlays — all pods run well within their declared resource boundaries.
+<img width="1333" height="667" alt="image" src="https://github.com/user-attachments/assets/55ba11ad-80ed-4e16-9506-98cd415d6472" />
+<img width="1334" height="672" alt="image" src="https://github.com/user-attachments/assets/fba36d41-d16d-4a34-9713-1f1f76312a30" />
 
 ---
 
