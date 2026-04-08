@@ -69,7 +69,7 @@ Built on a Jenkins master-worker node architecture. Every commit triggers a run 
 | Trivy Image Scan | Scans built container images before any push |
 | Docker Push | Pushes verified images to DockerHub |
 | Post Actions | Archives build artifacts and sends email notification |
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/74e5026e-934b-4d46-8b62-c3529d72e266" />
+<img width="1502" height="393" alt="image" src="https://github.com/user-attachments/assets/790f72a2-b5d9-44c2-9f51-19e25b1ee330" />
 
 ---
 
